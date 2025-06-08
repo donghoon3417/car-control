@@ -93,14 +93,14 @@
     updateInfo(currentPlayerIndex);
 
     const directions = {
-      q: { vx: -1, vy: -1, angle: 315 },
-      w: { vx:  0, vy: -1, angle: 0 },
-      e: { vx:  1, vy: -1, angle: 45 },
-      a: { vx: -1, vy:  0, angle: 270 },
-      d: { vx:  1, vy:  0, angle: 90 },
-      z: { vx: -1, vy:  1, angle: 225 },
-      x: { vx:  0, vy:  1, angle: 180 },
-      c: { vx:  1, vy:  1, angle: 135 }
+      q: { vx: -1, vy: -1 },
+      w: { vx:  0, vy: -1 },
+      e: { vx:  1, vy: -1 },
+      a: { vx: -1, vy:  0 },
+      d: { vx:  1, vy:  0 },
+      z: { vx: -1, vy:  1 },
+      x: { vx:  0, vy:  1 },
+      c: { vx:  1, vy:  1 }
     };
 
     let currentDirection = null;
@@ -108,6 +108,7 @@
     document.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
 
+      // 자동차 선택 (Shift + 알파벳 A~R)
       if (e.shiftKey && /^[a-r]$/.test(k)) {
         const idx = k.charCodeAt(0) - 97;
         if (idx < cars.length) {
@@ -121,6 +122,11 @@
 
       if (directions[k]) {
         currentDirection = k;
+      }
+
+      if (k === 's') {
+        const car = cars[currentPlayerIndex];
+        car.angle = (car.angle + 90) % 360;
       }
     });
 
@@ -144,7 +150,6 @@
         const dir = directions[currentDirection];
         car.vx = dir.vx * speed;
         car.vy = dir.vy * speed;
-        car.angle = dir.angle;
       } else {
         car.vx = 0;
         car.vy = 0;
@@ -153,7 +158,6 @@
       car.x += car.vx;
       car.y += car.vy;
 
-      // 경계 제한
       car.x = Math.max(margin, Math.min(screenWidth - carW - margin, car.x));
       car.y = Math.max(margin, Math.min(screenHeight - carH - margin, car.y));
 
