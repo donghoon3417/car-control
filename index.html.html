@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>자동차 제어 (후진 고정 모드)</title>
+  <style>
+    #car {
+      width: 80px;
+      height: 40px;
+      position: absolute;
+      top: 100px;
+      left: 100px;
+      transform-origin: center center;
+      transition: transform 0.1s linear;
+    }
+  </style>
+</head>
+<body>
+  <img id="car" src="car.png" alt="자동차" />
+
+  <script>
+    const car = document.getElementById("car");
+    let x = 100;
+    let y = 100;
+    let angle = 0;
+    let velocity = 0;
+    const maxSpeed = 5;
+    const acceleration = 0.1;
+    const friction = 0.05;
+    const turnSpeed = 2;
+
+    // 상태 저장
+    let isReversed = false;  // 후진 상태 여부 (한 번 후진하면 유지됨)
+
+    const keys = {
+      forward: false,  // D
+      backward: false, // A
+      left: false,     // W
+      right: false     // S
+    };
+
+    // 키 입력
+    document.addEventListener("keydown", (e) => {
+      switch (e.key.toLowerCase()) {
+        case "d": keys.forward = true; break;   // 전진
+        case "a": keys.backward = true; break;  // 후진
+        case "w": keys.left = true; break;      // 좌회전
+        case "s": keys.right = true; break;     // 우회전
+      }
+    });
+
+    document.addEventListener("keyup", (e) => {
+      switch (e.key.toLowerCase()) {
+        case "d": keys.forward = false; break;
+        case "a": keys.backward = false; break;
+        case "w": keys.left = false; break;
+        case "s": keys.right = false; break;
+      }
+    });
+
+    function update() {
+      // 조향 (속도 있을 때만 회전)
+      if (velocity !== 0) {
+        if (keys.left) angle -= turnSpeed;
+        if (keys.right) angle += turnSpeed;
+      }
+
+      // 가속 처리
+      if (keys.forward) {
+        velocity += acceleration;
+        isReversed = false; // 전진 시 뒤집기 해제하지 않음 — 고정 유지
+      } else if (keys.backward) {
+        velocity -= acceleration;
+        isReversed = true;  // 후진 상태로 고정
+      } else {
+        // 감속
+        if (velocity > 0) velocity = Math.max(0, velocity - friction);
+        if (velocity < 0) velocity = Math.min(0, velocity + friction);
+      }
+
+      // 속도 제한
+      velocity = Math.max(-maxSpeed, Math.min(maxSpeed, velocity));
+
+      // 이동
+      const radians = angle * (Math.PI / 180);
+      x += Math.cos(radians) * velocity;
+      y += Math.sin(radians) * velocity;
+
+      // 후진 상태가 true일 경우, 차량 이미지만 반전 (scaleX -1)
+      const flip = isReversed ? -1 : 1;
+
+      car.style.left = `${x}px`;
+      car.style.top = `${y}px`;
+      car.style.transform = `rotate(${angle}deg) scaleX(${flip})`;
+
+      requestAnimationFrame(update);
+    }
+
+    update(); // 시작
+  </script>
+</body>
+</html>
