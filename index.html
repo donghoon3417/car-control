@@ -72,7 +72,6 @@
 
       document.body.appendChild(car);
 
-      // 마우스 클릭으로 선택
       car.addEventListener("click", () => {
         cars[currentPlayerIndex].el.classList.remove("selected");
         currentPlayerIndex = i;
@@ -85,96 +84,82 @@
         x: x,
         y: y,
         angle: 0,
-        velocity: 0,
-        isReversed: false
+        vx: 0,
+        vy: 0
       });
     }
 
     cars[currentPlayerIndex].el.classList.add("selected");
     updateInfo(currentPlayerIndex);
 
-    const keys = {
-      forward: false,
-      backward: false,
-      left: false,
-      right: false
+    const directions = {
+      q: { vx: -1, vy: -1, angle: 315 },
+      w: { vx:  0, vy: -1, angle: 0 },
+      e: { vx:  1, vy: -1, angle: 45 },
+      a: { vx: -1, vy:  0, angle: 270 },
+      d: { vx:  1, vy:  0, angle: 90 },
+      z: { vx: -1, vy:  1, angle: 225 },
+      x: { vx:  0, vy:  1, angle: 180 },
+      c: { vx:  1, vy:  1, angle: 135 }
     };
+
+    let currentDirection = null;
 
     document.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
 
-      // 자동차 선택: Shift + 알파벳 (A~R)
       if (e.shiftKey && /^[a-r]$/.test(k)) {
-        const idx = k.charCodeAt(0) - 97; // 'a' = 97
+        const idx = k.charCodeAt(0) - 97;
         if (idx < cars.length) {
           cars[currentPlayerIndex].el.classList.remove("selected");
           currentPlayerIndex = idx;
           cars[currentPlayerIndex].el.classList.add("selected");
           updateInfo(idx);
         }
-      } else {
-        if (k === "w") keys.left = true;
-        if (k === "s") keys.right = true;
-        if (k === "d") keys.forward = true;
-        if (k === "a") keys.backward = true;
+        return;
+      }
+
+      if (directions[k]) {
+        currentDirection = k;
       }
     });
 
     document.addEventListener("keyup", (e) => {
       const k = e.key.toLowerCase();
-      if (k === "w") keys.left = false;
-      if (k === "s") keys.right = false;
-      if (k === "d") keys.forward = false;
-      if (k === "a") keys.backward = false;
+      if (currentDirection === k) {
+        currentDirection = null;
+      }
     });
 
-    const maxSpeed = 2.5;
-    const acceleration = 0.1;
-    const friction = 0.05;
-    const turnSpeed = 2;
+    const speed = 2.5;
     const screenWidth = 1920;
     const screenHeight = 1080;
+    const carW = 80, carH = 40;
+    const margin = 20;
 
     function update() {
       const car = cars[currentPlayerIndex];
 
-      // 조향
-      if (car.velocity !== 0) {
-        if (keys.left) car.angle -= turnSpeed;
-        if (keys.right) car.angle += turnSpeed;
-      }
-
-      // 가속
-      if (keys.forward) {
-        car.velocity += acceleration;
-        car.isReversed = false;
-      } else if (keys.backward) {
-        car.velocity -= acceleration;
-        car.isReversed = true;
+      if (currentDirection && directions[currentDirection]) {
+        const dir = directions[currentDirection];
+        car.vx = dir.vx * speed;
+        car.vy = dir.vy * speed;
+        car.angle = dir.angle;
       } else {
-        if (car.velocity > 0) car.velocity = Math.max(0, car.velocity - friction);
-        if (car.velocity < 0) car.velocity = Math.min(0, car.velocity + friction);
+        car.vx = 0;
+        car.vy = 0;
       }
 
-      // 속도 제한
-      car.velocity = Math.max(-maxSpeed, Math.min(maxSpeed, car.velocity));
+      car.x += car.vx;
+      car.y += car.vy;
 
-      // 이동
-      const rad = car.angle * (Math.PI / 180);
-      car.x += Math.cos(rad) * car.velocity;
-      car.y += Math.sin(rad) * car.velocity;
-
-      // 화면 경계 제한
-      const margin = 20;
-      const carW = 80, carH = 40;
+      // 경계 제한
       car.x = Math.max(margin, Math.min(screenWidth - carW - margin, car.x));
       car.y = Math.max(margin, Math.min(screenHeight - carH - margin, car.y));
 
-      // 렌더링
-      const flip = car.isReversed ? -1 : 1;
       car.el.style.left = `${car.x}px`;
       car.el.style.top = `${car.y}px`;
-      car.el.style.transform = `rotate(${car.angle}deg) scaleX(${flip})`;
+      car.el.style.transform = `rotate(${car.angle}deg)`;
 
       requestAnimationFrame(update);
     }
