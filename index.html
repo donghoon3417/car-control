@@ -20,6 +20,9 @@
 
   <script>
     const car = document.getElementById("car");
+    const carWidth = 80;
+    const carHeight = 40;
+
     let x = 100;
     let y = 100;
     let angle = 0;
@@ -76,22 +79,24 @@
       velocity = Math.max(-maxSpeed, Math.min(maxSpeed, velocity));
 
       const radians = angle * (Math.PI / 180);
-      x += Math.cos(radians) * velocity;
-      y += Math.sin(radians) * velocity;
+      let nextX = x + Math.cos(radians) * velocity;
+      let nextY = y + Math.sin(radians) * velocity;
 
-      // 화면 경계 체크
-      const carWidth = car.offsetWidth;
-      const carHeight = car.offsetHeight;
-      const maxX = window.innerWidth - carWidth;
-      const maxY = window.innerHeight - carHeight;
+      const halfWidth = carWidth / 2;
+      const halfHeight = carHeight / 2;
+      const maxX = window.innerWidth - halfWidth;
+      const maxY = window.innerHeight - halfHeight;
+      const minX = halfWidth;
+      const minY = halfHeight;
 
-      x = Math.max(0, Math.min(x, maxX));
-      y = Math.max(0, Math.min(y, maxY));
+      // 경계 안에 있을 때만 이동
+      if (nextX >= minX && nextX <= maxX) x = nextX;
+      if (nextY >= minY && nextY <= maxY) y = nextY;
 
       const flip = isReversed ? -1 : 1;
 
-      car.style.left = `${x}px`;
-      car.style.top = `${y}px`;
+      car.style.left = `${x - halfWidth}px`;
+      car.style.top = `${y - halfHeight}px`;
       car.style.transform = `rotate(${angle}deg) scaleX(${flip})`;
 
       requestAnimationFrame(update);
