@@ -29,23 +29,21 @@
     const friction = 0.05;
     const turnSpeed = 2;
 
-    // 상태 저장
-    let isReversed = false;  // 후진 상태 여부 (한 번 후진하면 유지됨)
+    let isReversed = false;
 
     const keys = {
-      forward: false,  // D
-      backward: false, // A
-      left: false,     // W
-      right: false     // S
+      forward: false,
+      backward: false,
+      left: false,
+      right: false
     };
 
-    // 키 입력
     document.addEventListener("keydown", (e) => {
       switch (e.key.toLowerCase()) {
-        case "d": keys.forward = true; break;   // 전진
-        case "a": keys.backward = true; break;  // 후진
-        case "w": keys.left = true; break;      // 좌회전
-        case "s": keys.right = true; break;     // 우회전
+        case "d": keys.forward = true; break;
+        case "a": keys.backward = true; break;
+        case "w": keys.left = true; break;
+        case "s": keys.right = true; break;
       }
     });
 
@@ -59,34 +57,37 @@
     });
 
     function update() {
-      // 조향 (속도 있을 때만 회전)
       if (velocity !== 0) {
         if (keys.left) angle -= turnSpeed;
         if (keys.right) angle += turnSpeed;
       }
 
-      // 가속 처리
       if (keys.forward) {
         velocity += acceleration;
-        isReversed = false; // 전진 시 뒤집기 해제하지 않음 — 고정 유지
+        isReversed = false;
       } else if (keys.backward) {
         velocity -= acceleration;
-        isReversed = true;  // 후진 상태로 고정
+        isReversed = true;
       } else {
-        // 감속
         if (velocity > 0) velocity = Math.max(0, velocity - friction);
         if (velocity < 0) velocity = Math.min(0, velocity + friction);
       }
 
-      // 속도 제한
       velocity = Math.max(-maxSpeed, Math.min(maxSpeed, velocity));
 
-      // 이동
       const radians = angle * (Math.PI / 180);
       x += Math.cos(radians) * velocity;
       y += Math.sin(radians) * velocity;
 
-      // 후진 상태가 true일 경우, 차량 이미지만 반전 (scaleX -1)
+      // 화면 경계 체크
+      const carWidth = car.offsetWidth;
+      const carHeight = car.offsetHeight;
+      const maxX = window.innerWidth - carWidth;
+      const maxY = window.innerHeight - carHeight;
+
+      x = Math.max(0, Math.min(x, maxX));
+      y = Math.max(0, Math.min(y, maxY));
+
       const flip = isReversed ? -1 : 1;
 
       car.style.left = `${x}px`;
@@ -96,7 +97,7 @@
       requestAnimationFrame(update);
     }
 
-    update(); // 시작
+    update();
   </script>
 </body>
 </html>
