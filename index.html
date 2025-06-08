@@ -1,33 +1,73 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>플레이어 선택 자동차 제어</title>
+  <meta charset="UTF-8" />
+  <title>자동차 제어</title>
   <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #f0f0f0;
+    }
+
     .car {
       width: 80px;
       height: 40px;
       position: absolute;
       transform-origin: center center;
       transition: transform 0.1s linear;
-      border: 2px solid transparent;
     }
-    .selected {
-      border-color: red;
+
+    #info {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-family: sans-serif;
     }
   </style>
 </head>
 <body>
+  <div id="info">선택된 자동차: 1번 (Shift+숫자키로 변경)</div>
+
   <script>
     const carCount = 18;
-    const carWidth = 80;
-    const carHeight = 40;
-    const screenWidth = 1980;
-    const screenHeight = 1080;
-    const padding = 20;
-    const cars = [];
+    const carsPerRow = 6;
+    const spacingX = 160;
+    const spacingY = 120;
+    const startX = 100;
+    const startY = 100;
 
-    let selectedCarIndex = 0;
+    const cars = [];
+    let currentPlayerIndex = 0;
+
+    for (let i = 0; i < carCount; i++) {
+      const car = document.createElement("img");
+      car.src = `car${i + 1}.png`;
+      car.className = "car";
+
+      const row = Math.floor(i / carsPerRow);
+      const col = i % carsPerRow;
+      const x = startX + col * spacingX;
+      const y = startY + row * spacingY;
+
+      car.style.left = `${x}px`;
+      car.style.top = `${y}px`;
+
+      document.body.appendChild(car);
+
+      cars.push({
+        el: car,
+        x: x,
+        y: y,
+        angle: 0,
+        velocity: 0,
+        isReversed: false
+      });
+    }
 
     const keys = {
       forward: false,
@@ -36,124 +76,80 @@
       right: false
     };
 
-    // 자동차 생성
-    for (let i = 0; i < carCount; i++) {
-      const carEl = document.createElement("img");
-      carEl.className = "car";
-      carEl.src = `car${i + 1}.png`;
-      carEl.alt = `자동차 ${i + 1}`;
-      document.body.appendChild(carEl);
-
-      const car = {
-        el: carEl,
-        x: Math.random() * (screenWidth - 2 * (carWidth + padding)) + carWidth + padding,
-        y: Math.random() * (screenHeight - 2 * (carHeight + padding)) + carHeight + padding,
-        angle: Math.random() * 360,
-        velocity: 0,
-        isReversed: false
-      };
-
-      // 클릭하면 선택
-      carEl.addEventListener("click", () => {
-        selectedCarIndex = i;
-        updateCarSelection();
-      });
-
-      cars.push(car);
-    }
-
-    function updateCarSelection() {
-      cars.forEach((car, index) => {
-        car.el.classList.toggle("selected", index === selectedCarIndex);
-      });
-    }
-
-    updateCarSelection();
-
     document.addEventListener("keydown", (e) => {
-      const key = e.key.toLowerCase();
-
+      const k = e.key.toLowerCase();
       if (e.shiftKey) {
-        const keyMap = {
-          "1": 0, "2": 1, "3": 2, "4": 3, "5": 4,
-          "6": 5, "7": 6, "8": 7, "9": 8,
-          "q": 9, "w": 10, "e": 11, "r": 12,
-          "t": 13, "y": 14, "u": 15, "i": 16, "o": 17
-        };
-        if (key in keyMap) {
-          selectedCarIndex = keyMap[key];
-          updateCarSelection();
+        const numberKey = parseInt(e.key);
+        if (!isNaN(numberKey)) {
+          const idx = numberKey === 0 ? 9 : numberKey - 1;
+          if (idx < cars.length) {
+            currentPlayerIndex = idx;
+            document.getElementById("info").innerText = `선택된 자동차: ${idx + 1}번 (Shift+숫자키로 변경)`;
+          }
         }
-        return;
-      }
-
-      // 조작키
-      switch (key) {
-        case "d": keys.forward = true; break;
-        case "a": keys.backward = true; break;
-        case "w": keys.left = true; break;
-        case "s": keys.right = true; break;
+      } else {
+        if (k === "w") keys.left = true;
+        if (k === "s") keys.right = true;
+        if (k === "d") keys.forward = true;
+        if (k === "a") keys.backward = true;
       }
     });
 
     document.addEventListener("keyup", (e) => {
-      switch (e.key.toLowerCase()) {
-        case "d": keys.forward = false; break;
-        case "a": keys.backward = false; break;
-        case "w": keys.left = false; break;
-        case "s": keys.right = false; break;
-      }
+      const k = e.key.toLowerCase();
+      if (k === "w") keys.left = false;
+      if (k === "s") keys.right = false;
+      if (k === "d") keys.forward = false;
+      if (k === "a") keys.backward = false;
     });
 
+    const maxSpeed = 2.5;
+    const acceleration = 0.1;
+    const friction = 0.05;
+    const turnSpeed = 2;
+    const screenWidth = 1920;
+    const screenHeight = 1080;
+
     function update() {
-      cars.forEach((car, index) => {
-        const el = car.el;
+      const car = cars[currentPlayerIndex];
 
-        const acceleration = 0.1;
-        const friction = 0.05;
-        const turnSpeed = 2;
-        const maxSpeed = 5;
+      // 조향
+      if (car.velocity !== 0) {
+        if (keys.left) car.angle -= turnSpeed;
+        if (keys.right) car.angle += turnSpeed;
+      }
 
-        if (index === selectedCarIndex) {
-          if (car.velocity !== 0) {
-            if (keys.left) car.angle -= turnSpeed;
-            if (keys.right) car.angle += turnSpeed;
-          }
+      // 가속
+      if (keys.forward) {
+        car.velocity += acceleration;
+        car.isReversed = false;
+      } else if (keys.backward) {
+        car.velocity -= acceleration;
+        car.isReversed = true;
+      } else {
+        if (car.velocity > 0) car.velocity = Math.max(0, car.velocity - friction);
+        if (car.velocity < 0) car.velocity = Math.min(0, car.velocity + friction);
+      }
 
-          if (keys.forward) {
-            car.velocity += acceleration;
-            car.isReversed = false;
-          } else if (keys.backward) {
-            car.velocity -= acceleration;
-            car.isReversed = true;
-          } else {
-            if (car.velocity > 0) car.velocity = Math.max(0, car.velocity - friction);
-            if (car.velocity < 0) car.velocity = Math.min(0, car.velocity + friction);
-          }
+      // 속도 제한
+      car.velocity = Math.max(-maxSpeed, Math.min(maxSpeed, car.velocity));
 
-          car.velocity = Math.max(-maxSpeed, Math.min(maxSpeed, car.velocity));
-        }
+      // 위치 계산
+      const rad = car.angle * (Math.PI / 180);
+      car.x += Math.cos(rad) * car.velocity;
+      car.y += Math.sin(rad) * car.velocity;
 
-        const radians = car.angle * (Math.PI / 180);
-        const nextX = car.x + Math.cos(radians) * car.velocity;
-        const nextY = car.y + Math.sin(radians) * car.velocity;
+      // 경계 제한
+      const margin = 20;
+      const carW = 80, carH = 40;
+      car.x = Math.max(margin, Math.min(screenWidth - carW - margin, car.x));
+      car.y = Math.max(margin, Math.min(screenHeight - carH - margin, car.y));
 
-        const halfW = carWidth / 2;
-        const halfH = carHeight / 2;
-        const minX = halfW + padding;
-        const maxX = screenWidth - halfW - padding;
-        const minY = halfH + padding;
-        const maxY = screenHeight - halfH - padding;
-
-        if (nextX >= minX && nextX <= maxX) car.x = nextX;
-        if (nextY >= minY && nextY <= maxY) car.y = nextY;
-
-        const flip = car.isReversed ? -1 : 1;
-
-        el.style.left = `${car.x - halfW}px`;
-        el.style.top = `${car.y - halfH}px`;
-        el.style.transform = `rotate(${car.angle}deg) scaleX(${flip})`;
-      });
+      // 렌더링
+      const flip = car.isReversed ? -1 : 1;
+      car.el.style.left = `${car.x}px`;
+      car.el.style.top = `${car.y}px`;
+      car.el.style.transform = `rotate(${car.angle}deg) scaleX(${flip})`;
 
       requestAnimationFrame(update);
     }
