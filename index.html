@@ -35,10 +35,60 @@
       font-family: sans-serif;
       z-index: 999;
     }
+
+    #touch-pad {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    #touch-pad .row {
+      display: flex;
+      gap: 5px;
+    }
+
+    #touch-pad button {
+      width: 50px;
+      height: 50px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: none;
+      background: #ddd;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    #touch-pad button:active {
+      background: #bbb;
+    }
   </style>
 </head>
 <body>
   <div id="info">선택된 자동차: A (Shift+알파벳 또는 마우스 클릭)</div>
+
+  <!-- 터치패드 -->
+  <div id="touch-pad">
+    <div class="row">
+      <button data-key="q">↖</button>
+      <button data-key="w">↑</button>
+      <button data-key="e">↗</button>
+    </div>
+    <div class="row">
+      <button data-key="a">←</button>
+      <button data-key="s">↻</button>
+      <button data-key="d">→</button>
+    </div>
+    <div class="row">
+      <button data-key="z">↙</button>
+      <button data-key="x">↓</button>
+      <button data-key="c">↘</button>
+    </div>
+  </div>
 
   <script>
     const carCount = 18;
@@ -108,7 +158,6 @@
     document.addEventListener("keydown", (e) => {
       const k = e.key.toLowerCase();
 
-      // 자동차 선택 (Shift + 알파벳 A~R)
       if (e.shiftKey && /^[a-r]$/.test(k)) {
         const idx = k.charCodeAt(0) - 97;
         if (idx < cars.length) {
@@ -140,7 +189,7 @@
     const speed = 2.5;
     const screenWidth = 1920;
     const screenHeight = 1080;
-    const carW = 80, carH = 40;
+    const carW = 180, carH = 200;
     const margin = 20;
 
     function update() {
@@ -169,6 +218,37 @@
     }
 
     update();
+
+    // 터치 패드 입력 처리
+    const touchPadButtons = document.querySelectorAll('#touch-pad button');
+    let touchInterval = null;
+
+    touchPadButtons.forEach(button => {
+      const key = button.dataset.key;
+
+      button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+
+        if (key === 's') {
+          const car = cars[currentPlayerIndex];
+          car.angle = (car.angle + 90) % 360;
+        } else if (directions[key]) {
+          currentDirection = key;
+        }
+
+        if (key !== 's') {
+          touchInterval = setInterval(() => {
+            currentDirection = key;
+          }, 100);
+        }
+      });
+
+      button.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        currentDirection = null;
+        clearInterval(touchInterval);
+      });
+    });
   </script>
 </body>
 </html>
