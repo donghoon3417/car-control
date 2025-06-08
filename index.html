@@ -84,10 +84,13 @@
 
       const halfWidth = carWidth / 2;
       const halfHeight = carHeight / 2;
-      const maxX = window.innerWidth - halfWidth;
-      const maxY = window.innerHeight - halfHeight;
-      const minX = halfWidth;
-      const minY = halfHeight;
+
+      // 여유를 준 경계 설정 (1980x1080 기준)
+      const padding = 20;
+      const minX = halfWidth + padding;
+      const maxX = 1920 - halfWidth - padding;
+      const minY = halfHeight + padding;
+      const maxY = 1080 - halfHeight - padding;
 
       // 경계 안에 있을 때만 이동
       if (nextX >= minX && nextX <= maxX) x = nextX;
