@@ -12,9 +12,10 @@
 
   <script type="text/javascript">
     // 지금 작성한 자바스크립트 코드를 여기에 넣으면 됨!
-    const carCount = 3;  // 플레이어 자동차 수 (원하는 값으로 설정)
-    const aiCarCount = 3;
-    const totalCarCount = carCount + aiCarCount;
+const carCount = 3;
+const aiCarCount = 3;
+const carsPerRow = 5;
+const totalCarCount = carCount + aiCarCount;
     
     for (let i = 0; i < totalCarCount; i++) {
       const car = document.createElement("img");
