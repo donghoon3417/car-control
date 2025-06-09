@@ -25,33 +25,18 @@
 <body>
 
 <script type="text/javascript">
-  // 자동차 수 설정
   const carCount = 3;
   const aiCarCount = 3;
   const carsPerRow = 5;
   const totalCarCount = carCount + aiCarCount;
 
-  // 위치 설정 변수
   const startX = 100;
   const startY = 100;
   const spacingX = 120;
   const spacingY = 120;
 
-  // 자동차 데이터
   const cars = [];
   let currentPlayerIndex = 0;
-
-  // 방향키 이동값
-  const directions = {
-    q: { vx: -1, vy: -1 },
-    w: { vx:  0, vy: -1 },
-    e: { vx:  1, vy: -1 },
-    a: { vx: -1, vy:  0 },
-    d: { vx:  1, vy:  0 },
-    z: { vx: -1, vy:  1 },
-    x: { vx:  0, vy:  1 },
-    c: { vx:  1, vy:  1 }
-  };
 
   const speed = 2;
   const screenWidth = window.innerWidth;
@@ -69,7 +54,6 @@
     }
     car.className = "car";
 
-    // 위치 계산
     const row = Math.floor(i / carsPerRow);
     const col = i % carsPerRow;
     const x = startX + col * spacingX;
@@ -79,7 +63,6 @@
     car.style.top = `${y}px`;
     document.body.appendChild(car);
 
-    // 클릭 이벤트 (플레이어용만)
     if (i < carCount) {
       car.addEventListener("click", () => {
         cars[currentPlayerIndex].el.classList.remove("selected");
@@ -88,7 +71,6 @@
       });
     }
 
-    // 자동차 데이터 저장
     cars.push({
       el: car,
       x: x, y: y,
@@ -100,23 +82,24 @@
 
   cars[currentPlayerIndex].el.classList.add("selected");
 
-  // AI 자동차 이동 로직
+  // AI 이동
   setInterval(() => {
     cars.forEach(car => {
       if (car.isAI) {
         if (Math.random() < 0.3) {
-          const dirKeys = Object.keys(directions);
-          const randomDir = dirKeys[Math.floor(Math.random() * dirKeys.length)];
-          const dir = directions[randomDir];
+          const dirs = [
+            { vx: -1, vy: -1 }, { vx: 0, vy: -1 }, { vx: 1, vy: -1 },
+            { vx: -1, vy: 0 }, { vx: 1, vy: 0 },
+            { vx: -1, vy: 1 }, { vx: 0, vy: 1 }, { vx: 1, vy: 1 }
+          ];
+          const dir = dirs[Math.floor(Math.random() * dirs.length)];
           car.vx = dir.vx * speed;
           car.vy = dir.vy * speed;
         }
 
-        // 이동
         car.x += car.vx;
         car.y += car.vy;
 
-        // 화면 경계 체크
         if (car.x < margin || car.x > screenWidth - carW - margin) car.vx *= -1;
         if (car.y < margin || car.y > screenHeight - carH - margin) car.vy *= -1;
 
@@ -126,43 +109,50 @@
     });
   }, 100);
 
-  // 키보드 조작 (플레이어 자동차)
-  let currentDirection = null;
-
-  function handleInput(dir) {
-    currentDirection = dir;
-  }
+  // 키 상태 저장
+  const keysPressed = {};
 
   document.addEventListener("keydown", (e) => {
     const k = e.key.toLowerCase();
-    if (directions[k]) {
-      handleInput(k);
+    keysPressed[k] = true;
+
+    const car = cars[currentPlayerIndex];
+
+    if (k === 'q') {
+      car.angle -= 15;
+      car.el.style.transform = `rotate(${car.angle}deg)`;
+    }
+
+    if (k === 'e') {
+      car.angle += 180;
+      car.el.style.transform = `rotate(${car.angle}deg)`;
     }
   });
 
   document.addEventListener("keyup", (e) => {
-    const k = e.key.toLowerCase();
-    if (currentDirection === k) {
-      currentDirection = null;
-    }
+    delete keysPressed[e.key.toLowerCase()];
   });
 
-  // 플레이어 자동차 이동
   function update() {
     const car = cars[currentPlayerIndex];
-    if (currentDirection && directions[currentDirection]) {
-      const dir = directions[currentDirection];
-      car.vx = dir.vx * speed;
-      car.vy = dir.vy * speed;
-    } else {
-      car.vx = 0;
-      car.vy = 0;
+
+    let vx = 0, vy = 0;
+    if (keysPressed['w']) vy -= 1;
+    if (keysPressed['s']) vy += 1;
+    if (keysPressed['a']) vx -= 1;
+    if (keysPressed['d']) vx += 1;
+
+    if (vx !== 0 && vy !== 0) {
+      vx *= Math.SQRT1_2;
+      vy *= Math.SQRT1_2;
     }
+
+    car.vx = vx * speed;
+    car.vy = vy * speed;
 
     car.x += car.vx;
     car.y += car.vy;
 
-    // 경계 체크
     if (car.x < margin) car.x = margin;
     if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
     if (car.y < margin) car.y = margin;
@@ -175,7 +165,7 @@
   }
 
   update();
-
 </script>
+
 </body>
 </html>
