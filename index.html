@@ -39,38 +39,19 @@
   let currentPlayerIndex = 0;
 
   const speed = 2;
+  const aiSpeed = speed * 10;
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
   const carW = 80, carH = 40;
   const margin = 20;
 
-  // AI 자동차 초기화 함수
+  // AI 자동차 초기화 (오른쪽에서 왼쪽)
   function resetAICar(car) {
-    const edge = Math.floor(Math.random() * 4);
-    const offset = 50;
-
-    if (edge === 0) { // 왼쪽에서 오른쪽
-      car.x = -offset;
-      car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
-      car.vx = speed;
-      car.vy = 0;
-    } else if (edge === 1) { // 오른쪽에서 왼쪽
-      car.x = screenWidth + offset;
-      car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
-      car.vx = -speed;
-      car.vy = 0;
-    } else if (edge === 2) { // 위에서 아래
-      car.x = Math.random() * (screenWidth - carW - margin * 2) + margin;
-      car.y = -offset;
-      car.vx = 0;
-      car.vy = speed;
-    } else { // 아래에서 위
-      car.x = Math.random() * (screenWidth - carW - margin * 2) + margin;
-      car.y = screenHeight + offset;
-      car.vx = 0;
-      car.vy = -speed;
-    }
-
+    const offset = 100;
+    car.x = screenWidth + offset;
+    car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
+    car.vx = -aiSpeed;
+    car.vy = 0;
     car.el.style.left = `${car.x}px`;
     car.el.style.top = `${car.y}px`;
   }
@@ -115,7 +96,6 @@
 
   cars[currentPlayerIndex].el.classList.add("selected");
 
-  // 키 입력 처리
   const keysPressed = {};
 
   document.addEventListener("keydown", (e) => {
@@ -123,7 +103,6 @@
     keysPressed[k] = true;
 
     const car = cars[currentPlayerIndex];
-
     if (k === 'q') {
       car.angle -= 90;
     }
@@ -143,11 +122,7 @@
         car.x += car.vx;
         car.y += car.vy;
 
-        const outOfScreen =
-          car.x < -100 || car.x > screenWidth + 100 ||
-          car.y < -100 || car.y > screenHeight + 100;
-
-        if (outOfScreen) {
+        if (car.x < -100) {
           resetAICar(car);
         }
 
@@ -192,5 +167,6 @@
 
   update();
 </script>
+
 </body>
 </html>
