@@ -4,83 +4,178 @@
   <meta charset="utf-8">
   <title>Car Control Game</title>
   <style>
-    /* 스타일 필요한 경우 여기에 */
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #f0f0f0;
+    }
+    .car {
+      width: 80px;
+      height: 40px;
+      position: absolute;
+      transform-origin: center center;
+      transition: transform 0.1s linear;
+      cursor: pointer;
+    }
+    .selected {
+      border: 2px solid red;
+    }
   </style>
 </head>
 <body>
-  <!-- 자동차 이미지 같은 요소가 여기 들어감 -->
 
-  <script type="text/javascript">
-    // 지금 작성한 자바스크립트 코드를 여기에 넣으면 됨!
-const carCount = 3;
-const aiCarCount = 3;
-const carsPerRow = 5;
-const totalCarCount = carCount + aiCarCount;
-    
-    for (let i = 0; i < totalCarCount; i++) {
-      const car = document.createElement("img");
-      if (i < carCount) {
-        car.src = `car${i + 1}.png`;
-      } else {
-        car.src = `car_ai.png`;
-      }
-      car.className = "car";
+<script type="text/javascript">
+  // 자동차 수 설정
+  const carCount = 3;
+  const aiCarCount = 3;
+  const carsPerRow = 5;
+  const totalCarCount = carCount + aiCarCount;
 
-      // 위치 계산
-      const row = Math.floor(i / carsPerRow);
-      const col = i % carsPerRow;
-      const x = startX + col * spacingX;
-      const y = startY + row * spacingY;
+  // 위치 설정 변수
+  const startX = 100;
+  const startY = 100;
+  const spacingX = 120;
+  const spacingY = 120;
 
-      car.style.left = `${x}px`;
-      car.style.top = `${y}px`;
-      document.body.appendChild(car);
+  // 자동차 데이터
+  const cars = [];
+  let currentPlayerIndex = 0;
 
-      // 클릭 이벤트는 플레이어용만
-      if (i < carCount) {
-        car.addEventListener("click", () => {
-          cars[currentPlayerIndex].el.classList.remove("selected");
-          currentPlayerIndex = i;
-          car.classList.add("selected");
-          updateInfo();
-        });
-      }
+  // 방향키 이동값
+  const directions = {
+    q: { vx: -1, vy: -1 },
+    w: { vx:  0, vy: -1 },
+    e: { vx:  1, vy: -1 },
+    a: { vx: -1, vy:  0 },
+    d: { vx:  1, vy:  0 },
+    z: { vx: -1, vy:  1 },
+    x: { vx:  0, vy:  1 },
+    c: { vx:  1, vy:  1 }
+  };
 
-      // 자동차 배열에 추가
-      cars.push({
-        el: car,
-        x: x, y: y,
-        angle: 0,
-        vx: 0, vy: 0,
-        isAI: i >= carCount
+  const speed = 2;
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const carW = 80, carH = 40;
+  const margin = 20;
+
+  // 자동차 생성
+  for (let i = 0; i < totalCarCount; i++) {
+    const car = document.createElement("img");
+    if (i < carCount) {
+      car.src = `car${i + 1}.png`;
+    } else {
+      car.src = `car_ai.png`;
+    }
+    car.className = "car";
+
+    // 위치 계산
+    const row = Math.floor(i / carsPerRow);
+    const col = i % carsPerRow;
+    const x = startX + col * spacingX;
+    const y = startY + row * spacingY;
+
+    car.style.left = `${x}px`;
+    car.style.top = `${y}px`;
+    document.body.appendChild(car);
+
+    // 클릭 이벤트 (플레이어용만)
+    if (i < carCount) {
+      car.addEventListener("click", () => {
+        cars[currentPlayerIndex].el.classList.remove("selected");
+        currentPlayerIndex = i;
+        car.classList.add("selected");
       });
     }
 
-    // AI 자동차 이동 로직
-    setInterval(() => {
-      cars.forEach(car => {
-        if (car.isAI) {
-          if (Math.random() < 0.3) {
-            const dirKeys = Object.keys(directions);
-            const randomDir = dirKeys[Math.floor(Math.random() * dirKeys.length)];
-            const dir = directions[randomDir];
-            car.vx = dir.vx * speed;
-            car.vy = dir.vy * speed;
-          }
+    // 자동차 데이터 저장
+    cars.push({
+      el: car,
+      x: x, y: y,
+      angle: 0,
+      vx: 0, vy: 0,
+      isAI: i >= carCount
+    });
+  }
 
-          // 이동
-          car.x += car.vx;
-          car.y += car.vy;
+  cars[currentPlayerIndex].el.classList.add("selected");
 
-          // 화면 경계 체크
-          if (car.x < margin || car.x > screenWidth - carW - margin) car.vx *= -1;
-          if (car.y < margin || car.y > screenHeight - carH - margin) car.vy *= -1;
-
-          car.el.style.left = `${car.x}px`;
-          car.el.style.top = `${car.y}px`;
+  // AI 자동차 이동 로직
+  setInterval(() => {
+    cars.forEach(car => {
+      if (car.isAI) {
+        if (Math.random() < 0.3) {
+          const dirKeys = Object.keys(directions);
+          const randomDir = dirKeys[Math.floor(Math.random() * dirKeys.length)];
+          const dir = directions[randomDir];
+          car.vx = dir.vx * speed;
+          car.vy = dir.vy * speed;
         }
-      });
-    }, 100);
-  </script>
+
+        // 이동
+        car.x += car.vx;
+        car.y += car.vy;
+
+        // 화면 경계 체크
+        if (car.x < margin || car.x > screenWidth - carW - margin) car.vx *= -1;
+        if (car.y < margin || car.y > screenHeight - carH - margin) car.vy *= -1;
+
+        car.el.style.left = `${car.x}px`;
+        car.el.style.top = `${car.y}px`;
+      }
+    });
+  }, 100);
+
+  // 키보드 조작 (플레이어 자동차)
+  let currentDirection = null;
+
+  function handleInput(dir) {
+    currentDirection = dir;
+  }
+
+  document.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (directions[k]) {
+      handleInput(k);
+    }
+  });
+
+  document.addEventListener("keyup", (e) => {
+    const k = e.key.toLowerCase();
+    if (currentDirection === k) {
+      currentDirection = null;
+    }
+  });
+
+  // 플레이어 자동차 이동
+  function update() {
+    const car = cars[currentPlayerIndex];
+    if (currentDirection && directions[currentDirection]) {
+      const dir = directions[currentDirection];
+      car.vx = dir.vx * speed;
+      car.vy = dir.vy * speed;
+    } else {
+      car.vx = 0;
+      car.vy = 0;
+    }
+
+    car.x += car.vx;
+    car.y += car.vy;
+
+    // 경계 체크
+    if (car.x < margin) car.x = margin;
+    if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
+    if (car.y < margin) car.y = margin;
+    if (car.y > screenHeight - carH - margin) car.y = screenHeight - carH - margin;
+
+    car.el.style.left = `${car.x}px`;
+    car.el.style.top = `${car.y}px`;
+
+    requestAnimationFrame(update);
+  }
+
+  update();
+
+</script>
 </body>
 </html>
