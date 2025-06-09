@@ -133,36 +133,37 @@
     delete keysPressed[e.key.toLowerCase()];
   });
 
-  function update() {
-    const car = cars[currentPlayerIndex];
+ function update() {
+  const car = cars[currentPlayerIndex];
 
-    let vx = 0, vy = 0;
-    if (keysPressed['w']) vy -= 1;
-    if (keysPressed['s']) vy += 1;
-    if (keysPressed['a']) vx -= 1;
-    if (keysPressed['d']) vx += 1;
+  let vx = 0, vy = 0;
+  if (keysPressed['w']) vy -= 1;
+  if (keysPressed['s']) vy += 1;
+  if (keysPressed['a']) vx -= 1;
+  if (keysPressed['d']) vx += 1;
 
-    if (vx !== 0 && vy !== 0) {
-      vx *= Math.SQRT1_2;
-      vy *= Math.SQRT1_2;
-    }
-
-    car.vx = vx * speed;
-    car.vy = vy * speed;
-
-    car.x += car.vx;
-    car.y += car.vy;
-
-    if (car.x < margin) car.x = margin;
-    if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
-    if (car.y < margin) car.y = margin;
-    if (car.y > screenHeight - carH - margin) car.y = screenHeight - carH - margin;
-
-    car.el.style.left = `${car.x}px`;
-    car.el.style.top = `${car.y}px`;
-
-    requestAnimationFrame(update);
+  if (vx !== 0 && vy !== 0) {
+    vx *= Math.SQRT1_2;
+    vy *= Math.SQRT1_2;
   }
+
+  car.vx = vx * speed;
+  car.vy = vy * speed;
+
+  car.x += car.vx;
+  car.y += car.vy;
+
+  if (car.x < margin) car.x = margin;
+  if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
+  if (car.y < margin) car.y = margin;
+  if (car.y > screenHeight - carH - margin) car.y = screenHeight - carH - margin;
+
+  car.el.style.left = `${car.x}px`;
+  car.el.style.top = `${car.y}px`;
+  car.el.style.transform = `rotate(${car.angle}deg)`; // 🔥 추가된 줄
+
+  requestAnimationFrame(update);
+}
 
   update();
 </script>
