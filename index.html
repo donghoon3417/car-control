@@ -24,7 +24,7 @@
 </head>
 <body>
 
-<script type="text/javascript">
+<script>
   const carCount = 3;
   const aiCarCount = 3;
   const carsPerRow = 5;
@@ -44,14 +44,41 @@
   const carW = 80, carH = 40;
   const margin = 20;
 
+  // AI 자동차 초기화 함수
+  function resetAICar(car) {
+    const edge = Math.floor(Math.random() * 4);
+    const offset = 50;
+
+    if (edge === 0) { // 왼쪽에서 오른쪽
+      car.x = -offset;
+      car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
+      car.vx = speed;
+      car.vy = 0;
+    } else if (edge === 1) { // 오른쪽에서 왼쪽
+      car.x = screenWidth + offset;
+      car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
+      car.vx = -speed;
+      car.vy = 0;
+    } else if (edge === 2) { // 위에서 아래
+      car.x = Math.random() * (screenWidth - carW - margin * 2) + margin;
+      car.y = -offset;
+      car.vx = 0;
+      car.vy = speed;
+    } else { // 아래에서 위
+      car.x = Math.random() * (screenWidth - carW - margin * 2) + margin;
+      car.y = screenHeight + offset;
+      car.vx = 0;
+      car.vy = -speed;
+    }
+
+    car.el.style.left = `${car.x}px`;
+    car.el.style.top = `${car.y}px`;
+  }
+
   // 자동차 생성
   for (let i = 0; i < totalCarCount; i++) {
     const car = document.createElement("img");
-    if (i < carCount) {
-      car.src = `car${i + 1}.png`;
-    } else {
-      car.src = `car_ai.png`;
-    }
+    car.src = i < carCount ? `car${i + 1}.png` : `car_ai.png`;
     car.className = "car";
 
     const row = Math.floor(i / carsPerRow);
@@ -63,7 +90,19 @@
     car.style.top = `${y}px`;
     document.body.appendChild(car);
 
-    if (i < carCount) {
+    const carData = {
+      el: car,
+      x: x, y: y,
+      angle: 0,
+      vx: 0, vy: 0,
+      isAI: i >= carCount
+    };
+
+    if (carData.isAI) {
+      resetAICar(carData);
+    }
+
+    if (!carData.isAI) {
       car.addEventListener("click", () => {
         cars[currentPlayerIndex].el.classList.remove("selected");
         currentPlayerIndex = i;
@@ -71,45 +110,12 @@
       });
     }
 
-    cars.push({
-      el: car,
-      x: x, y: y,
-      angle: 0,
-      vx: 0, vy: 0,
-      isAI: i >= carCount
-    });
+    cars.push(carData);
   }
 
   cars[currentPlayerIndex].el.classList.add("selected");
 
-  // AI 이동
-  setInterval(() => {
-    cars.forEach(car => {
-      if (car.isAI) {
-        if (Math.random() < 0.3) {
-          const dirs = [
-            { vx: -1, vy: -1 }, { vx: 0, vy: -1 }, { vx: 1, vy: -1 },
-            { vx: -1, vy: 0 }, { vx: 1, vy: 0 },
-            { vx: -1, vy: 1 }, { vx: 0, vy: 1 }, { vx: 1, vy: 1 }
-          ];
-          const dir = dirs[Math.floor(Math.random() * dirs.length)];
-          car.vx = dir.vx * speed;
-          car.vy = dir.vy * speed;
-        }
-
-        car.x += car.vx;
-        car.y += car.vy;
-
-        if (car.x < margin || car.x > screenWidth - carW - margin) car.vx *= -1;
-        if (car.y < margin || car.y > screenHeight - carH - margin) car.vy *= -1;
-
-        car.el.style.left = `${car.x}px`;
-        car.el.style.top = `${car.y}px`;
-      }
-    });
-  }, 100);
-
-  // 키 상태 저장
+  // 키 입력 처리
   const keysPressed = {};
 
   document.addEventListener("keydown", (e) => {
@@ -120,12 +126,9 @@
 
     if (k === 'q') {
       car.angle -= 90;
-      car.el.style.transform = `rotate(${car.angle}deg)`;
     }
-
     if (k === 'e') {
       car.angle += 180;
-      car.el.style.transform = `rotate(${car.angle}deg)`;
     }
   });
 
@@ -133,40 +136,61 @@
     delete keysPressed[e.key.toLowerCase()];
   });
 
- function update() {
-  const car = cars[currentPlayerIndex];
+  // AI 자동차 이동
+  setInterval(() => {
+    cars.forEach(car => {
+      if (car.isAI) {
+        car.x += car.vx;
+        car.y += car.vy;
 
-  let vx = 0, vy = 0;
-  if (keysPressed['w']) vy -= 1;
-  if (keysPressed['s']) vy += 1;
-  if (keysPressed['a']) vx -= 1;
-  if (keysPressed['d']) vx += 1;
+        const outOfScreen =
+          car.x < -100 || car.x > screenWidth + 100 ||
+          car.y < -100 || car.y > screenHeight + 100;
 
-  if (vx !== 0 && vy !== 0) {
-    vx *= Math.SQRT1_2;
-    vy *= Math.SQRT1_2;
+        if (outOfScreen) {
+          resetAICar(car);
+        }
+
+        car.el.style.left = `${car.x}px`;
+        car.el.style.top = `${car.y}px`;
+      }
+    });
+  }, 100);
+
+  // 플레이어 자동차 이동
+  function update() {
+    const car = cars[currentPlayerIndex];
+
+    let vx = 0, vy = 0;
+    if (keysPressed['w']) vy -= 1;
+    if (keysPressed['s']) vy += 1;
+    if (keysPressed['a']) vx -= 1;
+    if (keysPressed['d']) vx += 1;
+
+    if (vx !== 0 && vy !== 0) {
+      vx *= Math.SQRT1_2;
+      vy *= Math.SQRT1_2;
+    }
+
+    car.vx = vx * speed;
+    car.vy = vy * speed;
+
+    car.x += car.vx;
+    car.y += car.vy;
+
+    if (car.x < margin) car.x = margin;
+    if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
+    if (car.y < margin) car.y = margin;
+    if (car.y > screenHeight - carH - margin) car.y = screenHeight - carH - margin;
+
+    car.el.style.left = `${car.x}px`;
+    car.el.style.top = `${car.y}px`;
+    car.el.style.transform = `rotate(${car.angle}deg)`;
+
+    requestAnimationFrame(update);
   }
-
-  car.vx = vx * speed;
-  car.vy = vy * speed;
-
-  car.x += car.vx;
-  car.y += car.vy;
-
-  if (car.x < margin) car.x = margin;
-  if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
-  if (car.y < margin) car.y = margin;
-  if (car.y > screenHeight - carH - margin) car.y = screenHeight - carH - margin;
-
-  car.el.style.left = `${car.x}px`;
-  car.el.style.top = `${car.y}px`;
-  car.el.style.transform = `rotate(${car.angle}deg)`; // 🔥 추가된 줄
-
-  requestAnimationFrame(update);
-}
 
   update();
 </script>
-
 </body>
 </html>
