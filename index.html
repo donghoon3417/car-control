@@ -80,9 +80,18 @@ function resetAICar(car) {
       isAI: i >= carCount
     };
 
-    if (carData.isAI) {
-      resetAICar(carData);
-    }
+if (carData.isAI) {
+  const offset = 100;
+  const randomSpeed = Math.random() * 10 + 5;
+  carData.x = screenWidth + offset;
+  carData.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
+  carData.vx = -randomSpeed;
+  carData.vy = 0;
+  car.src = `car_ai.png`;
+  car.style.left = `${carData.x}px`;
+  car.style.top = `${carData.y}px`;
+}
+
 
     if (!carData.isAI) {
       car.addEventListener("click", () => {
