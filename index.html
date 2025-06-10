@@ -1,46 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>복잡한 도로 자동차 게임</title>
+  <meta charset="UTF-8">
+  <title>자동차 맵 에디터 게임</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background-color: #e8e8f8;
+      background: #eef;
       font-family: sans-serif;
     }
-
+    #game {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+    }
+    .tile {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+    }
+    .road {
+      background-color: #bbb;
+    }
     .car {
-      width: 80px;
-      height: 40px;
+      width: 60px;
+      height: 60px;
       position: absolute;
-      transition: transform 0.1s linear;
       cursor: pointer;
-      border: 3px solid transparent;
-      z-index: 10;
+      transition: left 0.05s, top 0.05s;
+      z-index: 2;
     }
-
-    .selected {
-      border-color: black;
-    }
-
     .goal {
-      width: 100px;
-      height: 100px;
-      position: absolute;
       border: 3px dashed #333;
       border-radius: 10px;
-      z-index: 5;
-    }
-
-    .road {
+      width: 60px;
+      height: 60px;
       position: absolute;
-      background-color: #bbb;
-      border: 1px dotted #999;
       z-index: 1;
     }
-
+    .selected {
+      outline: 3px solid black;
+    }
     #message {
       position: absolute;
       top: 20px;
@@ -48,147 +49,132 @@
       font-size: 32px;
       color: green;
       display: none;
-      z-index: 20;
+      z-index: 3;
     }
   </style>
 </head>
 <body>
+  <div id="game">
+    <div id="message">성공!</div>
+  </div>
 
-<div id="message">성공!</div>
+  <script>
+    const TILE_SIZE = 60;
+    const mapData = [
+      "####################",
+      "# B   #       r    #",
+      "# G   #            #",
+      "##### ####### #####",
+      "#R              b #",
+      "### ##########  ###",
+      "#g               ##",
+      "####################"
+    ];
 
-<!-- 복잡한 도로 구조 -->
-<div class="road" style="top:100px; left:100px; width:1000px; height:80px;"></div>
-<div class="road" style="top:180px; left:1020px; width:80px; height:300px;"></div>
-<div class="road" style="top:400px; left:100px; width:1000px; height:80px;"></div>
-<div class="road" style="top:180px; left:100px; width:80px; height:220px;"></div>
-<div class="road" style="top:260px; left:300px; width:600px; height:80px;"></div>
-<div class="road" style="top:340px; left:300px; width:80px; height:60px;"></div>
-
-<script>
-  const carW = 80, carH = 40;
-  const speed = 3;
-  const colors = ['red', 'blue', 'green'];
-  const cars = [], goals = [];
-  const keysPressed = {};
-  const arrived = new Set();
-  let currentPlayerIndex = 0;
-
-  const roadRects = Array.from(document.querySelectorAll('.road')).map(el => ({
-    x: el.offsetLeft,
-    y: el.offsetTop,
-    w: el.offsetWidth,
-    h: el.offsetHeight
-  }));
-
-  function isFullyOnRoad(x, y, w, h) {
-    return roadRects.some(road =>
-      x >= road.x &&
-      x + w <= road.x + road.w &&
-      y >= road.y &&
-      y + h <= road.y + road.h
-    );
-  }
-
-  // 목표지 생성
-  colors.forEach((color, i) => {
-    const goal = document.createElement("div");
-    goal.className = "goal";
-    goal.style.backgroundColor = color;
-    goal.style.left = "1750px";
-    goal.style.top = `${100 + i * 150}px`;
-    document.body.appendChild(goal);
-    goals.push({ color, el: goal });
-  });
-
-  // 자동차 생성
-  colors.forEach((color, i) => {
-    const car = document.createElement("div");
-    car.className = "car";
-    car.style.backgroundColor = color;
-    car.style.left = "120px";
-    car.style.top = `${110 + i * 60}px`;
-    document.body.appendChild(car);
-
-    const carData = {
-      el: car,
-      color,
-      x: 120,
-      y: 110 + i * 60,
-      vx: 0,
-      vy: 0
+    const colorMap = {
+      'R': 'red', 'B': 'blue', 'G': 'green',
+      'r': 'red', 'b': 'blue', 'g': 'green'
     };
 
-    car.addEventListener("click", () => {
-      cars[currentPlayerIndex].el.classList.remove("selected");
-      currentPlayerIndex = i;
-      car.classList.add("selected");
+    const game = document.getElementById("game");
+    const cars = [];
+    const goals = [];
+    const roads = new Set();
+    const keys = {};
+    let selectedCarIndex = 0;
+    const arrived = new Set();
+
+    function createTile(x, y, className) {
+      const el = document.createElement("div");
+      el.className = `tile ${className}`;
+      el.style.left = `${x * TILE_SIZE}px`;
+      el.style.top = `${y * TILE_SIZE}px`;
+      game.appendChild(el);
+      return el;
+    }
+
+    function isRoad(x, y) {
+      return roads.has(`${x},${y}`);
+    }
+
+    mapData.forEach((row, y) => {
+      [...row].forEach((cell, x) => {
+        if (cell === '#' || "RGBrgb".includes(cell)) {
+          roads.add(`${x},${y}`);
+          createTile(x, y, "road");
+        }
+
+        if ("RGB".includes(cell)) {
+          const color = colorMap[cell];
+          const el = document.createElement("div");
+          el.className = "car";
+          el.style.backgroundColor = color;
+          el.style.left = `${x * TILE_SIZE}px`;
+          el.style.top = `${y * TILE_SIZE}px`;
+          game.appendChild(el);
+
+          const car = { el, color, x, y };
+          el.addEventListener("click", () => {
+            cars[selectedCarIndex].el.classList.remove("selected");
+            selectedCarIndex = cars.indexOf(car);
+            car.el.classList.add("selected");
+          });
+
+          cars.push(car);
+        }
+
+        if ("rgb".includes(cell)) {
+          const color = colorMap[cell];
+          const el = createTile(x, y, "goal");
+          el.style.backgroundColor = color;
+          goals.push({ el, color, x, y });
+        }
+      });
     });
 
-    cars.push(carData);
-  });
+    cars[selectedCarIndex].el.classList.add("selected");
 
-  cars[currentPlayerIndex].el.classList.add("selected");
+    document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+    document.addEventListener("keyup", e => delete keys[e.key.toLowerCase()]);
 
-  // 키 입력
-  document.addEventListener("keydown", e => {
-    keysPressed[e.key.toLowerCase()] = true;
-  });
-  document.addEventListener("keyup", e => {
-    delete keysPressed[e.key.toLowerCase()];
-  });
+    function update() {
+      const car = cars[selectedCarIndex];
+      let dx = 0, dy = 0;
 
-  function update() {
-    const car = cars[currentPlayerIndex];
+      if (keys['w']) dy = -1;
+      if (keys['s']) dy = 1;
+      if (keys['a']) dx = -1;
+      if (keys['d']) dx = 1;
 
-    let vx = 0, vy = 0;
-    if (keysPressed['w']) vy -= 1;
-    if (keysPressed['s']) vy += 1;
-    if (keysPressed['a']) vx -= 1;
-    if (keysPressed['d']) vx += 1;
+      if (dx !== 0 || dy !== 0) {
+        const nx = car.x + dx;
+        const ny = car.y + dy;
+        if (isRoad(nx, ny)) {
+          car.x = nx;
+          car.y = ny;
+          car.el.style.left = `${nx * TILE_SIZE}px`;
+          car.el.style.top = `${ny * TILE_SIZE}px`;
+        }
+      }
 
-    if (vx !== 0 && vy !== 0) {
-      vx *= Math.SQRT1_2;
-      vy *= Math.SQRT1_2;
-    }
-
-    const nextX = car.x + vx * speed;
-    const nextY = car.y + vy * speed;
-
-    // 도로 위에 있을 때만 이동
-    if (isFullyOnRoad(nextX, nextY, carW, carH)) {
-      car.x = nextX;
-      car.y = nextY;
-    }
-
-    car.el.style.left = `${car.x}px`;
-    car.el.style.top = `${car.y}px`;
-
-    // 도착 체크
-    goals.forEach(goal => {
-      if (car.color === goal.color && !arrived.has(car.color)) {
-        const gx = goal.el.offsetLeft;
-        const gy = goal.el.offsetTop;
-        const gw = goal.el.offsetWidth;
-        const gh = goal.el.offsetHeight;
-
+      goals.forEach(goal => {
         if (
-          car.x + carW > gx &&
-          car.x < gx + gw &&
-          car.y + carH > gy &&
-          car.y < gy + gh
+          car.x === goal.x &&
+          car.y === goal.y &&
+          car.color === goal.color &&
+          !arrived.has(car.color)
         ) {
           arrived.add(car.color);
-          if (arrived.size === colors.length) {
+          if (arrived.size === cars.length) {
             document.getElementById("message").style.display = "block";
           }
         }
-      }
-    });
+      });
 
-    requestAnimationFrame(update);
-  }
+      requestAnimationFrame(update);
+    }
 
-  update();
-</script>
+    update();
+  </script>
 </body>
 </html>
