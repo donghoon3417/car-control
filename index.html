@@ -48,7 +48,7 @@
   // AI 자동차 초기화 (오른쪽에서 왼쪽)
 function resetAICar(car) {
   const offset = 100;
-  const randomSpeed = Math.random() * 5 + 3; // 3 ~ 8 사이 속도
+  const randomSpeed = Math.random() * 10 + 5; // 3 ~ 8 사이 속도
   car.x = screenWidth + offset;
   car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
   car.vx = -randomSpeed;
