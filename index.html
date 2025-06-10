@@ -6,47 +6,56 @@
   <style>
     body {
       margin: 0;
-      overflow: hidden;
-      background: #eef;
-      font-family: sans-serif;
+      background: #dde;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
+
     #game {
       position: relative;
-      width: 1920px;
-      height: 1080px;
+      width: calc(120px * 14);
+      height: calc(120px * 8);
     }
+
     .tile {
       position: absolute;
-      width: 60px;
-      height: 60px;
+      width: 120px;
+      height: 120px;
     }
+
     .road {
-      background-color: #bbb;
+      background-color: #aaa;
     }
+
     .car {
-      width: 60px;
-      height: 60px;
+      width: 120px;
+      height: 120px;
       position: absolute;
       cursor: pointer;
       transition: left 0.05s, top 0.05s;
       z-index: 2;
     }
+
     .goal {
-      border: 3px dashed #333;
+      border: 4px dashed #333;
       border-radius: 10px;
-      width: 60px;
-      height: 60px;
+      width: 120px;
+      height: 120px;
       position: absolute;
       z-index: 1;
     }
+
     .selected {
-      outline: 3px solid black;
+      outline: 4px solid black;
     }
+
     #message {
       position: absolute;
       top: 20px;
       left: 20px;
-      font-size: 32px;
+      font-size: 36px;
       color: green;
       display: none;
       z-index: 3;
@@ -59,16 +68,16 @@
   </div>
 
   <script>
-    const TILE_SIZE = 60;
+    const TILE_SIZE = 120;
     const mapData = [
-      "####################",
-      "# B   #       r    #",
-      "# G   #            #",
-      "##### ####### #####",
-      "#R              b #",
-      "### ##########  ###",
-      "#g               ##",
-      "####################"
+      "##############",
+      "# B   #     r#",
+      "# G   #      #",
+      "##### #  ### #",
+      "#R        b  #",
+      "### #######  #",
+      "#g           #",
+      "##############"
     ];
 
     const colorMap = {
