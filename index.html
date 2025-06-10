@@ -46,15 +46,16 @@
   const margin = 20;
 
   // AI 자동차 초기화 (오른쪽에서 왼쪽)
-  function resetAICar(car) {
-    const offset = 100;
-    car.x = screenWidth + offset;
-    car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
-    car.vx = -aiSpeed;
-    car.vy = 0;
-    car.el.style.left = `${car.x}px`;
-    car.el.style.top = `${car.y}px`;
-  }
+function resetAICar(car) {
+  const offset = 100;
+  const randomSpeed = Math.random() * 5 + 3; // 3 ~ 8 사이 속도
+  car.x = screenWidth + offset;
+  car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
+  car.vx = -randomSpeed;
+  car.vy = 0;
+  car.el.style.left = `${car.x}px`;
+  car.el.style.top = `${car.y}px`;
+}
 
   // 자동차 생성
   for (let i = 0; i < totalCarCount; i++) {
