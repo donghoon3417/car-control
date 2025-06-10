@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>색깔 맞추기 자동차 게임</title>
+  <title>복잡한 도로 자동차 게임</title>
   <style>
     body {
       margin: 0;
@@ -19,6 +19,7 @@
       transition: transform 0.1s linear;
       cursor: pointer;
       border: 3px solid transparent;
+      z-index: 10;
     }
 
     .selected {
@@ -31,6 +32,14 @@
       position: absolute;
       border: 3px dashed #333;
       border-radius: 10px;
+      z-index: 5;
+    }
+
+    .road {
+      position: absolute;
+      background-color: #ccc;
+      border: 1px dashed #999;
+      z-index: 1;
     }
 
     #message {
@@ -40,6 +49,7 @@
       font-size: 32px;
       color: green;
       display: none;
+      z-index: 20;
     }
   </style>
 </head>
@@ -47,10 +57,16 @@
 
 <div id="message">성공!</div>
 
+<!-- 복잡한 도로 구조 -->
+<div class="road" style="top: 100px; left: 100px; width: 600px; height: 60px;"></div>
+<div class="road" style="top: 300px; left: 200px; width: 500px; height: 60px;"></div>
+<div class="road" style="top: 100px; left: 600px; width: 60px; height: 260px;"></div>
+<div class="road" style="top: 300px; left: 600px; width: 60px; height: 200px;"></div>
+<div class="road" style="top: 450px; left: 300px; width: 360px; height: 60px;"></div>
+
 <script>
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
-  const margin = 20;
   const carW = 80, carH = 40;
   const speed = 3;
 
@@ -61,7 +77,24 @@
   const keysPressed = {};
   const arrived = new Set();
 
-  // 도착지 만들기
+  // 도로 구간 정보 수집
+  const roadRects = Array.from(document.querySelectorAll('.road')).map(el => ({
+    x: el.offsetLeft,
+    y: el.offsetTop,
+    w: el.offsetWidth,
+    h: el.offsetHeight
+  }));
+
+  function isOnRoad(x, y, w, h) {
+    return roadRects.some(road =>
+      x + w > road.x &&
+      x < road.x + road.w &&
+      y + h > road.y &&
+      y < road.y + road.h
+    );
+  }
+
+  // 목표지 생성
   colors.forEach((color, i) => {
     const goal = document.createElement("div");
     goal.className = "goal";
@@ -77,15 +110,15 @@
     const car = document.createElement("div");
     car.className = "car";
     car.style.backgroundColor = color;
-    car.style.left = `${100}px`;
-    car.style.top = `${100 + i * 150}px`;
+    car.style.left = `120px`;
+    car.style.top = `${110 + i * 60}px`;
     document.body.appendChild(car);
 
     const carData = {
       el: car,
       color,
-      x: 100,
-      y: 100 + i * 150,
+      x: 120,
+      y: 110 + i * 60,
       vx: 0, vy: 0
     };
 
@@ -104,6 +137,7 @@
   document.addEventListener("keydown", e => {
     keysPressed[e.key.toLowerCase()] = true;
   });
+
   document.addEventListener("keyup", e => {
     delete keysPressed[e.key.toLowerCase()];
   });
@@ -122,14 +156,13 @@
       vy *= Math.SQRT1_2;
     }
 
-    car.vx = vx * speed;
-    car.vy = vy * speed;
-    car.x += car.vx;
-    car.y += car.vy;
+    const nextX = car.x + vx * speed;
+    const nextY = car.y + vy * speed;
 
-    // 화면 경계 처리
-    car.x = Math.max(margin, Math.min(screenWidth - carW - margin, car.x));
-    car.y = Math.max(margin, Math.min(screenHeight - carH - margin, car.y));
+    if (isOnRoad(nextX, nextY, carW, carH)) {
+      car.x = nextX;
+      car.y = nextY;
+    }
 
     car.el.style.left = `${car.x}px`;
     car.el.style.top = `${car.y}px`;
