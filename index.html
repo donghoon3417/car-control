@@ -15,14 +15,14 @@
 
     #game {
       position: relative;
-      width: calc(120px * 14);
-      height: calc(120px * 8);
+      width: calc(240px * 14);
+      height: calc(240px * 8);
     }
 
     .tile {
       position: absolute;
-      width: 120px;
-      height: 120px;
+      width: 240px;
+      height: 240px;
     }
 
     .road {
@@ -30,19 +30,19 @@
     }
 
     .car {
-      width: 120px;
-      height: 120px;
+      width: 240px;
+      height: 240px;
       position: absolute;
       cursor: pointer;
-      transition: left 0.05s, top 0.05s;
+      transition: left 0.1s, top 0.1s;
       z-index: 2;
     }
 
     .goal {
       border: 4px dashed #333;
       border-radius: 10px;
-      width: 120px;
-      height: 120px;
+      width: 240px;
+      height: 240px;
       position: absolute;
       z-index: 1;
     }
@@ -68,7 +68,7 @@
   </div>
 
   <script>
-    const TILE_SIZE = 120;
+    const TILE_SIZE = 240;
     const mapData = [
       "##############",
       "# B   #     r#",
