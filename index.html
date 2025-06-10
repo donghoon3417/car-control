@@ -2,13 +2,15 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Car Control Game</title>
+  <title>색깔 맞추기 자동차 게임</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      background-color: #f0f0f0;
+      background-color: #eef;
+      font-family: sans-serif;
     }
+
     .car {
       width: 80px;
       height: 40px;
@@ -16,133 +18,96 @@
       transform-origin: center center;
       transition: transform 0.1s linear;
       cursor: pointer;
+      border: 3px solid transparent;
     }
+
     .selected {
-      border: 2px solid red;
+      border-color: black;
+    }
+
+    .goal {
+      width: 100px;
+      height: 100px;
+      position: absolute;
+      border: 3px dashed #333;
+      border-radius: 10px;
+    }
+
+    #message {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-size: 32px;
+      color: green;
+      display: none;
     }
   </style>
 </head>
 <body>
 
+<div id="message">성공!</div>
+
 <script>
-  const carCount = 3;
-  const aiCarCount = 3;
-  const carsPerRow = 5;
-  const totalCarCount = carCount + aiCarCount;
-
-  const startX = 100;
-  const startY = 100;
-  const spacingX = 120;
-  const spacingY = 120;
-
-  const cars = [];
-  let currentPlayerIndex = 0;
-
-  const speed = 2;
-  const aiSpeed = speed * 10;
   const screenWidth = window.innerWidth;
   const screenHeight = window.innerHeight;
-  const carW = 80, carH = 40;
   const margin = 20;
+  const carW = 80, carH = 40;
+  const speed = 3;
 
-  // AI 자동차 초기화 (오른쪽에서 왼쪽)
-function resetAICar(car) {
-  const offset = 100;
-  const randomSpeed = Math.random() * 10 + 5; // 3 ~ 8 사이 속도
-  car.x = screenWidth + offset;
-  car.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
-  car.vx = -randomSpeed;
-  car.vy = 0;
-  car.el.style.left = `${car.x}px`;
-  car.el.style.top = `${car.y}px`;
-}
+  const colors = ['red', 'blue', 'green'];
+  const cars = [];
+  const goals = [];
+  let currentPlayerIndex = 0;
+  const keysPressed = {};
+  const arrived = new Set();
+
+  // 도착지 만들기
+  colors.forEach((color, i) => {
+    const goal = document.createElement("div");
+    goal.className = "goal";
+    goal.style.backgroundColor = color;
+    goal.style.left = `${screenWidth - 150}px`;
+    goal.style.top = `${100 + i * 150}px`;
+    document.body.appendChild(goal);
+    goals.push({ color, el: goal });
+  });
 
   // 자동차 생성
-  for (let i = 0; i < totalCarCount; i++) {
-    const car = document.createElement("img");
-    car.src = i < carCount ? `car${i + 1}.png` : `car_ai.png`;
+  colors.forEach((color, i) => {
+    const car = document.createElement("div");
     car.className = "car";
-
-    const row = Math.floor(i / carsPerRow);
-    const col = i % carsPerRow;
-    const x = startX + col * spacingX;
-    const y = startY + row * spacingY;
-
-    car.style.left = `${x}px`;
-    car.style.top = `${y}px`;
+    car.style.backgroundColor = color;
+    car.style.left = `${100}px`;
+    car.style.top = `${100 + i * 150}px`;
     document.body.appendChild(car);
 
     const carData = {
       el: car,
-      x: x, y: y,
-      angle: 0,
-      vx: 0, vy: 0,
-      isAI: i >= carCount
+      color,
+      x: 100,
+      y: 100 + i * 150,
+      vx: 0, vy: 0
     };
 
-if (carData.isAI) {
-  const offset = 100;
-  const randomSpeed = Math.random() * 10 + 5;
-  carData.x = screenWidth + offset;
-  carData.y = Math.random() * (screenHeight - carH - margin * 2) + margin;
-  carData.vx = -randomSpeed;
-  carData.vy = 0;
-  car.src = `car_ai.png`;
-  car.style.left = `${carData.x}px`;
-  car.style.top = `${carData.y}px`;
-}
-
-
-    if (!carData.isAI) {
-      car.addEventListener("click", () => {
-        cars[currentPlayerIndex].el.classList.remove("selected");
-        currentPlayerIndex = i;
-        car.classList.add("selected");
-      });
-    }
+    car.addEventListener("click", () => {
+      cars[currentPlayerIndex].el.classList.remove("selected");
+      currentPlayerIndex = i;
+      car.classList.add("selected");
+    });
 
     cars.push(carData);
-  }
+  });
 
   cars[currentPlayerIndex].el.classList.add("selected");
 
-  const keysPressed = {};
-
-  document.addEventListener("keydown", (e) => {
-    const k = e.key.toLowerCase();
-    keysPressed[k] = true;
-
-    const car = cars[currentPlayerIndex];
-    if (k === 'q') {
-      car.angle -= 90;
-    }
-    if (k === 'e') {
-      car.angle += 180;
-    }
+  // 키 입력 처리
+  document.addEventListener("keydown", e => {
+    keysPressed[e.key.toLowerCase()] = true;
   });
-
-  document.addEventListener("keyup", (e) => {
+  document.addEventListener("keyup", e => {
     delete keysPressed[e.key.toLowerCase()];
   });
 
-  // AI 자동차 이동
-  setInterval(() => {
-    cars.forEach(car => {
-      if (car.isAI) {
-        car.x += car.vx;
-        car.y += car.vy;
-
-        if (car.x < -100) {
-          resetAICar(car);
-        }
-
-        car.el.style.left = `${car.x}px`;
-        car.el.style.top = `${car.y}px`;
-      }
-    });
-  }, 100);
-
-  // 플레이어 자동차 이동
   function update() {
     const car = cars[currentPlayerIndex];
 
@@ -159,24 +124,42 @@ if (carData.isAI) {
 
     car.vx = vx * speed;
     car.vy = vy * speed;
-
     car.x += car.vx;
     car.y += car.vy;
 
-    if (car.x < margin) car.x = margin;
-    if (car.x > screenWidth - carW - margin) car.x = screenWidth - carW - margin;
-    if (car.y < margin) car.y = margin;
-    if (car.y > screenHeight - carH - margin) car.y = screenHeight - carH - margin;
+    // 화면 경계 처리
+    car.x = Math.max(margin, Math.min(screenWidth - carW - margin, car.x));
+    car.y = Math.max(margin, Math.min(screenHeight - carH - margin, car.y));
 
     car.el.style.left = `${car.x}px`;
     car.el.style.top = `${car.y}px`;
-    car.el.style.transform = `rotate(${car.angle}deg)`;
+
+    // 목표지 도착 체크
+    goals.forEach(goal => {
+      if (car.color === goal.color && !arrived.has(car.color)) {
+        const gx = goal.el.offsetLeft;
+        const gy = goal.el.offsetTop;
+        const gw = goal.el.offsetWidth;
+        const gh = goal.el.offsetHeight;
+
+        if (
+          car.x + carW > gx &&
+          car.x < gx + gw &&
+          car.y + carH > gy &&
+          car.y < gy + gh
+        ) {
+          arrived.add(car.color);
+          if (arrived.size === colors.length) {
+            document.getElementById("message").style.display = "block";
+          }
+        }
+      }
+    });
 
     requestAnimationFrame(update);
   }
 
   update();
 </script>
-
 </body>
 </html>
